@@ -1,0 +1,4 @@
+add_subdirectory(common)
+add_subdirectory(thread_utils)
+add_subdirectory(parser)
+add_subdirectory(application)
