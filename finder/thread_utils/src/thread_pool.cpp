@@ -4,7 +4,7 @@
 namespace finder::thread_utils
 {
 
-thread_pool::thread_pool(size_t pool_size)
+thread_pool::thread_pool(size_t pool_size) : m_work_done{ false }, m_started_work{ false }
 {
     for (int i = 0; i < pool_size; ++i)
     {
@@ -76,6 +76,8 @@ void thread_pool::stop()
 
 void thread_pool::push(task_type&& task)
 {
+    if (!task) 
+        thread_safe_puts("[WARNING] thread #", std::this_thread::get_id(), " : task is not valid!", '\n');
     m_pending.push(std::move(task));
     m_tasks_st.cv.notify_one();
 }

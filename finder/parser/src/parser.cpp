@@ -1,54 +1,11 @@
 #include "parser.hpp"
 #include "thread_safe_puts.hpp"
 
-#include <Windows.h>
-
 namespace finder::parser
 {
     namespace 
     {
     
-    bool CanAccessFolder(LPCTSTR folderName, DWORD genericAccessRights)
-    {
-	    bool bRet = false;
-	    DWORD attributes = GetFileAttributes(folderName);
-	    if ((attributes & FILE_ATTRIBUTE_HIDDEN) || (attributes & FILE_ATTRIBUTE_SYSTEM))
-	    	return bRet;
-	    DWORD length = 0;
-	    if (!::GetFileSecurity(folderName, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION
-	    	| DACL_SECURITY_INFORMATION, NULL, NULL, &length) &&
-	    	ERROR_INSUFFICIENT_BUFFER == ::GetLastError()) {
-	    	PSECURITY_DESCRIPTOR security = static_cast<PSECURITY_DESCRIPTOR>(::malloc(length));
-	    	if (security && ::GetFileSecurity(folderName, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION
-	    		| DACL_SECURITY_INFORMATION, security, length, &length)) {
-	    		HANDLE hToken = NULL;
-	    		if (::OpenProcessToken(::GetCurrentProcess(), TOKEN_IMPERSONATE | TOKEN_QUERY |
-	    			TOKEN_DUPLICATE | STANDARD_RIGHTS_READ, &hToken)) {
-	    			HANDLE hImpersonatedToken = NULL;
-	    			if (::DuplicateToken(hToken, SecurityImpersonation, &hImpersonatedToken)) {
-	    				GENERIC_MAPPING mapping = { 0xFFFFFFFF };
-	    				PRIVILEGE_SET privileges = { 0 };
-	    				DWORD grantedAccess = 0, privilegesLength = sizeof(privileges);
-	    				BOOL result = FALSE;
-	    				mapping.GenericRead = FILE_GENERIC_READ;
-	    				mapping.GenericWrite = FILE_GENERIC_WRITE;
-	    				mapping.GenericExecute = FILE_GENERIC_EXECUTE;
-	    				mapping.GenericAll = FILE_ALL_ACCESS;
-	    				::MapGenericMask(&genericAccessRights, &mapping);
-	    				if (::AccessCheck(security, hImpersonatedToken, genericAccessRights,
-	    					&mapping, &privileges, &privilegesLength, &grantedAccess, &result)) {
-	    					bRet = (result == TRUE);
-	    				}
-	    				::CloseHandle(hImpersonatedToken);
-	    			}
-	    			::CloseHandle(hToken);
-	    		}
-	    		::free(security);
-	    	}
-	    }
-	    return bRet;
-    }
-
     void search_file_impl(std::filesystem::directory_entry current, std::string_view filename, 
         thread_utils::thread_pool& pool)
     {
@@ -65,9 +22,7 @@ namespace finder::parser
         {
             if (entry.is_directory())
             {
-                std::wstring p{ entry.path() };
-                if (CanAccessFolder((LPCTSTR)p.c_str(), GENERIC_READ))
-                    pool.push(std::bind(search_file_impl, entry, filename, std::ref(pool)));
+                pool.push(std::bind(search_file_impl, entry, filename, std::ref(pool)));
                 continue;
             }
             if (entry.is_regular_file() && entry.path().filename() == filename)

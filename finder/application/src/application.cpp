@@ -5,7 +5,7 @@
 
 int main()
 {
-    std::filesystem::directory_entry initial{ "C://" };
-    finder::parser::search_file(initial, "find_me.txt", 8);
+    std::filesystem::directory_entry initial{ "/" };
+    finder::parser::search_file(initial, "find_me.txt", 2);
     return 0;
 }

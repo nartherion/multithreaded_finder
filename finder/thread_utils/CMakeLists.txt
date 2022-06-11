@@ -10,6 +10,12 @@ target_include_directories(ThreadUtils PUBLIC
     include/
     )
 
+find_package(Threads REQUIRED)
+
+target_link_libraries(ThreadUtils PRIVATE 
+    Threads::Threads
+    )
+
 target_link_libraries(ThreadUtils PUBLIC 
     Common
     )
