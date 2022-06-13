@@ -15,12 +15,12 @@ namespace finder::thread_utils
 
 class thread_pool : public finder::noncopyable
 {
-    using task_type = std::function<void()>;
     struct synchro_tool
     {
         std::mutex mx;
         std::condition_variable cv;
     };
+    using task_type = std::function<void()>;
 private:
     std::vector<std::thread>     m_threads;
     thread_safe_queue<task_type> m_pending;

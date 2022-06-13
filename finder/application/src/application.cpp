@@ -3,9 +3,11 @@
 
 #include "parser.hpp"
 
+namespace fs = std::filesystem;
+
 int main()
 {
-    std::filesystem::directory_entry initial{ "/" };
-    finder::parser::search_file(initial, "file.txt", 2);
+    fs::directory_entry initial{ "/sys" };
+    finder::parser::search_file(initial, "not_file.txt", 8);
     return 0;
 }

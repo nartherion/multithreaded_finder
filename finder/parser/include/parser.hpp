@@ -3,8 +3,6 @@
 #include <filesystem>
 #include <string_view>
 
-#include "thread_pool.hpp"
-
 namespace finder::parser
 {
 

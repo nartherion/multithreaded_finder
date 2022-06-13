@@ -66,6 +66,7 @@ void thread_pool::start()
 
 void thread_pool::stop()
 {
+    if (!m_started_work) return;
     push_stop_task();
     for (auto& thread : m_threads)
         if (thread.joinable())
@@ -73,14 +74,14 @@ void thread_pool::stop()
             thread_safe_puts("[INFO] thread #", thread.get_id(), " : joined", '\n');
             thread.join();
         }
-    clear();
+    m_pending.clear();
+    m_threads.clear();
+    m_started_work = false;
     thread_safe_puts("[INFO] thread_pool : work done & threads joined & tasks queue emptied", '\n');
 }
 
 void thread_pool::push(task_type&& task)
 {
-    if (!task) 
-        thread_safe_puts("[WARNING] thread #", std::this_thread::get_id(), " : task is not valid!", '\n');
     m_pending.push(std::move(task));
     m_tasks_st.cv.notify_one();
 }
@@ -89,12 +90,6 @@ void thread_pool::push_stop_task()
 {
     push(task_type{});
     thread_safe_puts("[WARNING] thread #", std::this_thread::get_id(), " : pushed STOP task", '\n');
-}
-
-void thread_pool::clear()
-{
-    thread_safe_queue<task_type> t;
-    std::swap(t, m_pending);
 }
 
 void thread_pool::set_work_done() { m_work_done.store(true); }
