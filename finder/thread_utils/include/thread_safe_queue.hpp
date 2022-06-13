@@ -19,11 +19,13 @@ public:
     thread_safe_queue& operator = (thread_safe_queue&&) noexcept;
 public:
     void     push(const T&);
+	void     push(T&&);
     void     pop();
     void     clear();
     T&       front();
     const T& front() const;
     bool     empty() const;
+	size_t   size()  const;
 };
 
 // Implementation follows
@@ -37,6 +39,13 @@ thread_safe_queue<T>& thread_safe_queue<T>::operator = (thread_safe_queue&& rhs)
 {
 	std::swap(raw_queue, rhs.raw_queue);
 	return *this;
+}
+
+template <typename T>
+void thread_safe_queue<T>::push(T&& object)
+{
+	std::unique_lock lock{ queue_mx };
+	raw_queue.push(std::move(object));
 }
 
 template <typename T>
@@ -72,6 +81,13 @@ bool thread_safe_queue<T>::empty() const
 {
 	std::unique_lock lock{ queue_mx };
 	return raw_queue.empty();
+}
+
+template <typename T>
+size_t thread_safe_queue<T>::size() const
+{
+	std::unique_lock lock{ queue_mx };
+	return raw_queue.size();
 }
 
 template <typename T>

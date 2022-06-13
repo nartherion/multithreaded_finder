@@ -29,7 +29,10 @@ thread_pool::thread_pool(size_t pool_size) : m_work_done{ false }, m_started_wor
                         thread_safe_puts("[WARNING] thread #", std::this_thread::get_id(), 
                             " : started waiting for tasks | waiting duration : 5s", '\n');
                         if (m_tasks_st.cv.wait_for(lock, std::chrono::seconds(5), [&] { return !m_pending.empty(); }))
+                        {
                             task = std::move(m_pending.front());
+                            m_pending.pop();
+                        }
                         else
                         {
                             set_work_done();
